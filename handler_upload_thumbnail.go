@@ -7,21 +7,10 @@ import (
 	"mime"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
 )
-
-func containsMediaType(s string, substring []string) bool {
-	for _, sub := range substring {
-		if strings.Contains(s, sub) {
-			return true
-		}
-	}
-
-	return false
-}
 
 func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Request) {
 	videoIDString := r.PathValue("videoID")
