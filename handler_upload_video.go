@@ -90,9 +90,28 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 
 	assetPath := getAssetPath(encodedKey, mediaType)
 
-	cfg.s3Client.PutObject(r.Context(), &s3.PutObjectInput{Bucket: &cfg.s3Bucket, Key: &assetPath, Body: tempFile, ContentType: &mediaType})
+	aspectRatio, err := getVideoAspectRatio(tempFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Unable to get video information", err)
+		return
+	}
 
-	videoURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, assetPath)
+	var prefixKey string
+
+	switch aspectRatio {
+	case "16:9":
+		prefixKey = "landscape"
+	case "9:16":
+		prefixKey = "portrait"
+	default:
+		prefixKey = "other"
+	}
+
+	videoKey := fmt.Sprintf("%s/%s", prefixKey, assetPath)
+
+	cfg.s3Client.PutObject(r.Context(), &s3.PutObjectInput{Bucket: &cfg.s3Bucket, Key: &videoKey, Body: tempFile, ContentType: &mediaType})
+
+	videoURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, videoKey)
 
 	video.VideoURL = &videoURL
 	err = cfg.db.UpdateVideo(video)
