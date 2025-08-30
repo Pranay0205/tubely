@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"io"
+	"log"
 	"mime"
 	"net/http"
 	"os"
@@ -13,21 +14,27 @@ import (
 )
 
 func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received thumbnail upload request from %s", r.RemoteAddr)
+
 	videoIDString := r.PathValue("videoID")
 	videoID, err := uuid.Parse(videoIDString)
 	if err != nil {
+		log.Printf("Invalid video ID format: %s - %v", videoIDString, err)
 		respondWithError(w, http.StatusBadRequest, "Invalid ID", err)
 		return
 	}
+	log.Printf("Processing thumbnail upload for video ID: %s", videoID)
 
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
+		log.Printf("Authorization failed: %v", err)
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
 		return
 	}
 
 	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
 	if err != nil {
+		log.Printf("JWT validation failed: %v", err)
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
 		return
 	}
