@@ -122,15 +122,7 @@ func (cfg *apiConfig) handlerVideoGet(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Successfully retrieved video %s", videoID)
 
-	presignedVideo, err := cfg.dbVideoToSignedVideo(video)
-	if err != nil {
-		log.Printf("Failed to sign video %s: %v", videoID, err)
-		respondWithError(w, http.StatusNotFound, "Couldn't sign the video", err)
-		return
-	}
-	log.Printf("Successfully signed video %s for access", videoID)
-
-	respondWithJSON(w, http.StatusOK, presignedVideo)
+	respondWithJSON(w, http.StatusOK, video)
 }
 
 func (cfg *apiConfig) handlerVideosRetrieve(w http.ResponseWriter, r *http.Request) {
@@ -164,16 +156,5 @@ func (cfg *apiConfig) handlerVideosRetrieve(w http.ResponseWriter, r *http.Reque
 	}
 	log.Printf("Found %d videos for user %s", len(videos), userID)
 
-	var presignedVideos []database.Video
-	for _, video := range videos {
-		presignedVideo, err := cfg.dbVideoToSignedVideo(video)
-		if err != nil {
-			log.Printf("Failed to sign video %s: %v", video.ID, err)
-			respondWithError(w, http.StatusInternalServerError, "Couldn't sign the video", err)
-			return
-		}
-		presignedVideos = append(presignedVideos, presignedVideo)
-	}
-
-	respondWithJSON(w, http.StatusOK, presignedVideos)
+	respondWithJSON(w, http.StatusOK, videos)
 }
